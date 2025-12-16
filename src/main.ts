@@ -1,6 +1,15 @@
 import { bootstrapApplication } from '@angular/platform-browser';
+import { provideRouter } from '@angular/router';
+import { importProvidersFrom } from '@angular/core';
+import { CommonModule } from '@angular/common';
 
 import { App } from './app/app';
-import { appConfig } from './app/app.config';
+import { routes } from './app/routes';
 
-bootstrapApplication(App, appConfig);
+// Final main.ts
+bootstrapApplication(App, {
+  providers: [
+    provideRouter(routes),
+    importProvidersFrom(CommonModule),
+  ],
+});

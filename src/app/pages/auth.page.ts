@@ -73,8 +73,8 @@ export default class AuthPage {
     const ADMIN_PASSWORD = import.meta.env['VITE_ADMIN_PASSWORD'];
 
     if (this.username === ADMIN_USERNAME && this.password === ADMIN_PASSWORD) {
-      localStorage.setItem('username', this.username);
-      location.href = '/';
+      localStorage.setItem('auth', 'true'); // tanda login
+      location.href = '/'; // langsung ke IndexPage
     } else {
       this.error = 'Invalid username or password';
     }

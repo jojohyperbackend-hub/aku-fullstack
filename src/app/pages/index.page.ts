@@ -1,4 +1,4 @@
-import { Component, OnInit, signal } from '@angular/core';
+import { Component } from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 
@@ -14,139 +14,122 @@ type Item = {
   standalone: true,
   imports: [CommonModule, FormsModule],
   template: `
-    <div class="container">
-      <h1>Items Dashboard</h1>
-      <button class="logout" (click)="logout()">Log Out</button>
-
-      <table>
-        <thead>
-          <tr>
-            <th>ID</th>
-            <th>Name</th>
-            <th>Price</th>
-            <th>Stock</th>
-            <th>Action</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr *ngFor="let item of items()">
-            <td>{{ item.id }}</td>
-            <td>{{ item.name }}</td>
-            <td>{{ item.price }}</td>
-            <td>{{ item.stock }}</td>
-            <td>
-              <button class="delete-btn" (click)="deleteItem(item.id)">Delete</button>
-            </td>
-          </tr>
-        </tbody>
-      </table>
+    <div class="index-container">
+      <h1>Admin Dashboard</h1>
+      <button class="logout-btn" (click)="logout()">Logout</button>
 
       <h2>Add Item</h2>
       <form (submit)="addItem($event)">
-        <input type="text" placeholder="Name" [(ngModel)]="newItem.name" name="name" required>
+        <input type="text" placeholder="Item name" [(ngModel)]="newItem.name" name="name" required>
         <input type="number" placeholder="Price" [(ngModel)]="newItem.price" name="price" required>
         <input type="number" placeholder="Stock" [(ngModel)]="newItem.stock" name="stock" required>
         <button type="submit">Add</button>
       </form>
 
+      <h2>Items</h2>
+      <table border="1" cellpadding="8">
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Price</th>
+          <th>Stock</th>
+          <th>Actions</th>
+        </tr>
+        <tr *ngFor="let item of items">
+          <td>{{ item.id }}</td>
+          <td>{{ item.name }}</td>
+          <td>{{ item.price }}</td>
+          <td>{{ item.stock }}</td>
+          <td>
+            <button (click)="editItem(item)">Edit</button>
+            <button (click)="deleteItem(item.id)">Delete</button>
+          </td>
+        </tr>
+      </table>
+
+      <p class="error" *ngIf="error">{{ error }}</p>
+
       <style>
-        .container {
-          max-width: 600px;
-          margin: 20px auto;
+        .index-container {
+          max-width: 800px;
+          margin: 50px auto;
+          padding: 20px;
           font-family: Arial, sans-serif;
-        }
-        h1 {
           text-align: center;
+        }
+        input {
+          margin: 5px;
+          padding: 5px;
+        }
+        button {
+          margin: 5px;
+          padding: 5px 10px;
+          border-radius: 4px;
+          border: none;
+          cursor: pointer;
+        }
+        .logout-btn {
+          background: #e74c3c;
+          color: white;
         }
         table {
           width: 100%;
+          margin-top: 20px;
           border-collapse: collapse;
-          margin-bottom: 20px;
         }
         th, td {
-          border: 1px solid #444;
           padding: 8px;
-          text-align: left;
+          text-align: center;
         }
-        th {
-          background: #eee;
-        }
-        input {
-          margin-right: 8px;
-          padding: 6px;
-        }
-        button {
-          padding: 6px 12px;
-          cursor: pointer;
-        }
-        .delete-btn {
-          background: #e74c3c;
-          color: white;
-          border: none;
-        }
-        .logout {
-          float: right;
-          background: #3498db;
-          color: white;
-          border: none;
-          margin-bottom: 10px;
-        }
-        form {
+        .error {
+          color: red;
           margin-top: 10px;
         }
       </style>
     </div>
   `,
 })
-export default class IndexPage implements OnInit {
-  items = signal<Item[]>([]);
+export default class IndexPage {
+  items: Item[] = [];
   newItem: Partial<Item> = { name: '', price: 0, stock: 0 };
+  error = '';
+  private idCounter = 1;
 
-  ngOnInit() {
-    this.loadItems();
-  }
-
-  loadItems() {
-    fetch('/api/v1/das?action=list', {
-      headers: { 'x-user': localStorage.getItem('username') || '' },
-    })
-      .then(res => res.json())
-      .then(data => this.items.set(data))
-      .catch(() => this.items.set([]));
+  logout() {
+    localStorage.removeItem('auth');
+    location.href = '/auth';
   }
 
   addItem(event: Event) {
     event.preventDefault();
-    fetch('/api/v1/das?action=add', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user': localStorage.getItem('username') || '',
-      },
-      body: JSON.stringify(this.newItem),
-    })
-      .then(res => res.json())
-      .then(data => {
-        this.items.set(data);
-        this.newItem = { name: '', price: 0, stock: 0 };
-      });
+    if (!this.newItem.name || this.newItem.price == null || this.newItem.stock == null) {
+      this.error = 'Please fill all fields';
+      return;
+    }
+
+    this.items.push({
+      id: this.idCounter++,
+      name: this.newItem.name,
+      price: this.newItem.price,
+      stock: this.newItem.stock,
+    });
+
+    this.newItem = { name: '', price: 0, stock: 0 };
+    this.error = '';
   }
 
   deleteItem(id: number) {
-    fetch('/api/v1/das?action=delete', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'x-user': localStorage.getItem('username') || '',
-      },
-      body: JSON.stringify({ id }),
-    })
-      .then(res => res.json())
-      .then(data => this.items.set(data));
+    this.items = this.items.filter((item) => item.id !== id);
   }
 
-  logout() {
-    localStorage.removeItem('username');
-    location.href = '/auth';
+  editItem(item: Item) {
+    const name = prompt('Edit name:', item.name);
+    const price = prompt('Edit price:', item.price.toString());
+    const stock = prompt('Edit stock:', item.stock.toString());
+    if (name !== null && price !== null && stock !== null) {
+      item.name = name;
+      item.price = Number(price);
+      item.stock = Number(stock);
+    }
   }
 }

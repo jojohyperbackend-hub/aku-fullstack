@@ -65,24 +65,6 @@ http://localhost:5173
 
 ---
 
-## API Endpoint (Contoh)
-- GET `/api/v1/das?action=list` : Mendapatkan list item
-- POST `/api/v1/das?action=add` : Menambahkan item
-  ```json
-  {
-    "name": "ItemName",
-    "price": 100,
-    "stock": 10
-  }
-  ```
-- POST `/api/v1/das?action=delete` : Menghapus item
-  ```json
-  {
-    "id": 1
-  }
-  ```
-> **Catatan:** Semua operasi memerlukan header `x-user` untuk autentikasi tapi gak perlu di test di postman karena udah otomatis
-
 ---
 
 ## catatan dari developer

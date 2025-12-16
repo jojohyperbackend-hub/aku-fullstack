@@ -1,5 +1,11 @@
-import { defineEventHandler, getQuery, getHeader, readBody, sendError, createError } from 'h3';
-import bcrypt from 'bcryptjs'; // optional jika mau hash password
+import {
+  defineEventHandler,
+  getQuery,
+  getHeader,
+  readBody,
+  sendError,
+  createError,
+} from 'h3';
 
 type Item = {
   id: number;
@@ -8,24 +14,22 @@ type Item = {
   stock: number;
 };
 
-// in-memory store (DEV ONLY)
+// In-memory store (DEV ONLY)
 let items: Item[] = [];
 let idCounter = 1;
 
-// ambil username & password dari .env
-const ADMIN_USERNAME = import.meta.env['VITE_ADMIN_USERNAME'];
-const ADMIN_PASSWORD = import.meta.env['VITE_ADMIN_PASSWORD']; // plaintext, bisa diganti hash
-
 export default defineEventHandler(async (event) => {
+  // Ambil query param
   const query = getQuery(event);
   const action = query.action;
 
-  // auth sederhana pakai header
+  // Auth sederhana via header x-user
   const user = getHeader(event, 'x-user');
-  const pass = getHeader(event, 'x-pass');
-
-  if (!user || !pass || user !== ADMIN_USERNAME || pass !== ADMIN_PASSWORD) {
-    return sendError(event, createError({ statusCode: 401, statusMessage: 'Unauthorized' }));
+  if (!user) {
+    return sendError(
+      event,
+      createError({ statusCode: 401, statusMessage: 'Unauthorized' })
+    );
   }
 
   // ===== LIST =====
@@ -37,17 +41,21 @@ export default defineEventHandler(async (event) => {
   if (action === 'add') {
     const body = await readBody(event);
 
-    if (!body?.name) {
-      return sendError(event, createError({ statusCode: 400, statusMessage: 'Invalid body' }));
+    if (!body?.name || typeof body.price !== 'number' || typeof body.stock !== 'number') {
+      return sendError(
+        event,
+        createError({ statusCode: 400, statusMessage: 'Invalid body. Pastikan name, price, stock ada dan benar' })
+      );
     }
 
-    items.push({
+    const newItem: Item = {
       id: idCounter++,
       name: body.name,
-      price: Number(body.price) || 0,
-      stock: Number(body.stock) || 0,
-    });
+      price: body.price,
+      stock: body.stock,
+    };
 
+    items.push(newItem);
     return items;
   }
 
@@ -55,13 +63,53 @@ export default defineEventHandler(async (event) => {
   if (action === 'delete') {
     const body = await readBody(event);
 
-    if (!body?.id) {
-      return sendError(event, createError({ statusCode: 400, statusMessage: 'Missing id' }));
+    if (typeof body.id !== 'number') {
+      return sendError(
+        event,
+        createError({ statusCode: 400, statusMessage: 'Invalid body. Pastikan id ada dan number' })
+      );
     }
 
-    items = items.filter((i) => i.id !== Number(body.id));
+    items = items.filter((i) => i.id !== body.id);
     return items;
   }
 
-  return sendError(event, createError({ statusCode: 400, statusMessage: 'Unknown action' }));
+  // ===== EDIT =====
+  if (action === 'edit') {
+    const body = await readBody(event);
+
+    if (
+      typeof body.id !== 'number' ||
+      !body.name ||
+      typeof body.price !== 'number' ||
+      typeof body.stock !== 'number'
+    ) {
+      return sendError(
+        event,
+        createError({ statusCode: 400, statusMessage: 'Invalid body. Pastikan id, name, price, stock ada dan benar' })
+      );
+    }
+
+    const index = items.findIndex((i) => i.id === body.id);
+    if (index === -1) {
+      return sendError(
+        event,
+        createError({ statusCode: 404, statusMessage: 'Item not found' })
+      );
+    }
+
+    items[index] = {
+      id: body.id,
+      name: body.name,
+      price: body.price,
+      stock: body.stock,
+    };
+
+    return items;
+  }
+
+  return sendError(
+    event,
+    createError({ statusCode: 400, statusMessage: 'Unknown action' })
+  );
 });
