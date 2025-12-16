@@ -36,7 +36,7 @@ VITE_ADMIN_PASSWORD=hashed_password_here
 ## Cara Install dan Jalankan
 1. Clone repository:
 ```bash
-git clone <repo-url>
+git clone https://github.com/jojohyperbackend-hub/aku-fullstack.git
 cd aku-fullstack
 ```
 2. Install dependencies:
@@ -90,9 +90,9 @@ kalian bebas mau di intergrasi databse boleh pake mongoDB atau prosge bebas ya a
 
 ubah 
 
-├── app.config.server.ts   ✅ JANGAN DIUBAH
-├── app.config.ts          ✅ JANGAN DIUBAH
-├── app.spec.ts            ✅ JANGAN DIUBAH
-└── app.ts                 ✅ JANGAN DIUBAH
+ app.config.server.ts   ✅ JANGAN DIUBAH
+ app.config.ts          ✅ JANGAN DIUBAH
+app.spec.ts            ✅ JANGAN DIUBAH
+ app.ts                 ✅ JANGAN DIUBAH
 
 karena itu semua default dari analog js kecuali mau nambah pake ssr
